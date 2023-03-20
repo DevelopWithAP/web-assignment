@@ -1,0 +1,1 @@
+export const photosBaseUrl = 'https://api.pexels.com/v1';
