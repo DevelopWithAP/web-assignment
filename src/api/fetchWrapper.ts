@@ -1,9 +1,8 @@
 import { photosBaseUrl } from './constants/baseUrl';
-import {Photo} from '../types/Photo';
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-export const fetchWrapper = async (page?:number): Promise<Photo[]> => {
+export const fetchWrapper = async (page?:number): Promise<any> => {
 
     const baseUrl = photosBaseUrl;
 
