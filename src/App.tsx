@@ -1,31 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import './App.css'
-import { fetchWrapper } from './api/fetchWrapper';
-import { Photo } from './types/Photo';
 import PhotosContainer from './Components/PhotosContainer/PhotosContainer';
+import Spinner from './Components/Spinner/Spinner';
 import { useLocalState } from './hooks/useLocalState';
-// import { useFetch } from './hooks/useFetch';
+import { useFetch } from './hooks/useFetch';
+import InfinintScroll from './Components/InfininteScroll/InfiniteScroll';
 
 function App() {
-
-  const [photos, setPhotos] = useState<Photo[]>([]);
   const [favourites, setFavourites] = useLocalState<number[]>([], 'favourite photos');
-  const [prevPage, setPrevPage] = useState<number>(0);
-  const [currPage, setCurrPage] = useState<number>(1);
-  const [lastPhotos, setLastPhotos] = useState<boolean>(false);
-  const innerRef = useRef(); 
+  const [page, setPage] = useState<number>(1);
 
-  const fetchData = () => {
-    fetchWrapper()
-      .then(data => {
-        setPhotos(data.photos);
-      });
+  const { photos, loading, hasMore } = useFetch(page);
+
+  const handleLoadMore = () => {
+    setPage(page => page + 1);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
   const handleFavourite = (itemId: number) => {
     setFavourites(current => current.concat(itemId));
   };
@@ -35,9 +25,17 @@ function App() {
   };
 
   return (
-      <>
-      <PhotosContainer favourites={favourites} photos={photos} onFavourite={handleFavourite} onUnfavourite={handleUnfavourite}/>
-      </>
+    <>
+      {page === 1 && loading}
+      <InfinintScroll
+        hasMore={hasMore}
+        isLoading={loading}
+        loader={() => <Spinner />}
+        onLoadMore={handleLoadMore}
+      >
+        <PhotosContainer favourites={favourites} photos={photos} onFavourite={handleFavourite} onUnfavourite={handleUnfavourite} />
+      </InfinintScroll>
+    </>
   );
 }
 

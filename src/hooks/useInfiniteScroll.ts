@@ -1,28 +1,34 @@
-import { useEffect, useState } from 'react';
+import React, {useEffect, useRef, useCallback} from 'react';
 
-export const useInfiniteScroll = (callbackFn: any) =>  {
-    const [isFetching, setIsFetching] = useState<boolean>(false);
+export const useInfiniteScroll = (hasMore: boolean, loading: boolean, onLoadMore: () => void) => {
+    const loaderRef = useRef<HTMLDivElement>(null);
+    const observerRef = useRef<IntersectionObserver>(null) as React.MutableRefObject<IntersectionObserver>;
+    const loadMore = hasMore && !loading;
 
-    useEffect(() => {
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    useEffect(() => {
-        if(!isFetching) {
+    const callbackFn = useCallback((entries: IntersectionObserverEntry[]) => {
+        const [entry] = entries;
+        if(!entry.isIntersecting || !loading) {
             return;
         }
-        callbackFn(() => {
-            console.log('Called Back...');
-        });
-    }, [isFetching]);
+        onLoadMore();
+    },[loadMore]);
 
-    const handleScroll = () => {
-        if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || isFetching) {
-            return;
+    useEffect(() => {
+        const node = loaderRef.current;
+        if(node) {
+            const observer = new IntersectionObserver(callbackFn, {
+                rootMargin: '1500px',
+            });
+            observer.observe(node);
+            observerRef.current = observer;
         }
-        setIsFetching(true);
 
-        return {isFetching, setIsFetching};
-    };
+        return () => {
+            if(node) {
+                observerRef.current.unobserve(node);
+            }
+        }
+    },[callbackFn]);
+
+    return loaderRef;
 };
